@@ -58,7 +58,7 @@ Project is assumed if <object>: is omitted.
 A file path needs to be provided; a tar file with the contents of
 the packet will be created at the specified path.
 
-Currently, only MapAnnotations, Tags, FileAnnotations and CommentAnnotations
+Currently, only MapAnnotations, TagAnnotationss, FileAnnotations and CommentAnnotations
 are packaged into the transfer pack, and only Point, Line, Ellipse, Rectangle
 and Polygon-type ROIs are packaged.
 
@@ -86,6 +86,8 @@ guaranteed to work with unpack.
 orig_group`), other options are `none`, `img_id`, `timestamp`, `software`,
 `version`, `md5`, `hostname`, `db_id`, `orig_user`, `orig_group`.
 
+--exclude specifies types of Annotations or ROI to exclude from the pack
+
 --binaries allows to specify whether to archive binary data
 (e.g images, ROIs, FileAnnotations) or only create the transfer.xml.
 Default is `all` and will create the archive.
@@ -99,6 +101,7 @@ omero transfer pack --zip Image:123 transfer_pack.zip
 omero transfer pack Dataset:1111 /home/user/new_folder/new_pack.tar
 omero transfer pack 999 tarfile.tar  # equivalent to Project:999
 omero transfer pack 1 transfer_pack.tar --metadata img_id version db_id
+omero transfer pack 1 transfer_pack.tar --exclude MapAnnotation,TagAnnotation,ROI
 omero transfer pack --binaries none Dataset:1111 /home/user/new_folder/
 omero transfer pack --binaries all Dataset:1111 /home/user/new_folder/pack.tar
 """)
@@ -137,11 +140,14 @@ options are `none`, `img_id`, `timestamp`, `software`, `version`, `md5`,
 You can also pass all --skip options that are allowed by `omero import` (all,
 checksum, thumbnails, minmax, upgrade).
 
+--exclude specifies types of Annotations or ROI to exclude from the pack
+
 Examples:
 omero transfer unpack transfer_pack.zip
 omero transfer unpack --output /home/user/optional_folder --ln_s
 omero transfer unpack --folder /home/user/unpacked_folder/ --skip upgrade
 omero transfer unpack pack.tar --metadata db_id orig_user hostname
+omero transfer unpack pack.tar --exclude MapAnnotation,TagAnnotation,ROI
 """)
 
 PREPARE_HELP = ("""Creates an XML from a folder with images.
@@ -231,6 +237,12 @@ class TransferControl(GraphControl):
             help="Metadata field to be added to MapAnnotation"
         )
         pack.add_argument(
+            "--exclude",
+            choices=['Annotation','MapAnnotation','TagAnnotation',
+            'CommentAnnotation','LongAnnotation','FileAnnotation','ROI'], nargs="+",
+            help="Types of annotations or ROI to be excluded from pack"
+        )
+        pack.add_argument(
                 "--plugin", help="Use external plugin for packing.",
                 type=str)
         pack.add_argument("filepath", type=str, help=file_help)
@@ -273,6 +285,12 @@ class TransferControl(GraphControl):
                      'software', 'version', 'md5', 'hostname', 'db_id',
                      'orig_user', 'orig_group'], nargs='+',
             help="Metadata field to be added to MapAnnotation"
+        )
+        unpack.add_argument(
+            "--exclude",
+            choices=['Annotation','MapAnnotation','TagAnnotation',
+            'CommentAnnotation','LongAnnotation','FileAnnotation','ROI'], nargs="+",
+            help="Types of annotations or ROI to be excluded from pack"
         )
         folder_help = ("Path to folder with image files")
         prepare.add_argument("folder", type=str, help=folder_help)
